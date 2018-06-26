@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import * as auth0 from 'auth0-js';
-import { Observer, Observable } from 'rxjs';
+import { Http, Headers, RequestOptions } from '@angular/http';
 
 (window as any).global = window;
 
@@ -17,17 +17,13 @@ export class AuthService {
     responseType: 'token id_token',
     audience: 'https://cs503forsam.auth0.com/userinfo',
     redirectUri: 'http://localhost:3000/callback',
-    scope: 'openid profile'
+    scope: 'openid'
   });
 
-  userProfile: any;
-  private observer: Observer<string>;
-  nicknameChange$: Observable<string> = new Observable(obs => this.observer = obs);
-
-  constructor(public router: Router) {}
+  constructor(public router: Router, private http: Http) {}
 
   public login(): void {
-    this.auth0.authorize();
+    return this.auth0.authorize();
   }
 
   public handleAuthentication(): void {
@@ -35,12 +31,9 @@ export class AuthService {
       if (authResult && authResult.accessToken && authResult.idToken) {
         window.location.hash = '';
         this.setSession(authResult);
-        this.router.navigate(['/home']);
-        // this.getProfile((err, profile) => {
-        //   this.userProfile = profile;
-        // });
+        this.router.navigate(['/']);
       } else if (err) {
-        this.router.navigate(['/home']);
+        this.router.navigate(['/']);
         console.log(err);
       }
     });
@@ -70,26 +63,31 @@ export class AuthService {
     return new Date().getTime() < expiresAt;
   }
 
-
-  //for user profile
-  // public getProfile(cb): void {
-  //   const accessToken = localStorage.getItem('access_token');
-  //   if (!accessToken) {
-  //     throw new Error('Access token must exist to fetch profile');
-  //   }
-  //   const self = this;
-  //   this.auth0.client.userInfo(accessToken, (err, profile) => {
-  //     if (profile) {
-  //       self.userProfile = profile;
-  //       //watch the change of nickname, if no change, don't exceute.
-  //       this.observer.next(profile.nickname);
-  //     }
-  //     cb(err, profile);
-  //   });
-  // }
+  
   public getProfile(): any {
-    
     return JSON.parse(localStorage.getItem('profile'));
   }
 
+  public resetPassword() {
+    let profile = this.getProfile();
+    let url : string = `https://${'cs503forsam.auth0.com'}/dbconnections/change_password`;
+    let headers = new Headers({'content-type': 'application/json'});
+    let body = {
+      client_id: 'iduDNvbsJ9K5sR0-JzjAQ-dFTGVt0Sfm',
+      email: profile.email,
+      connection: 'Username-Password-Authentication'
+    }
+
+    let options = new RequestOptions({ headers: headers });
+
+    this.http.post(url, body, options)
+      .toPromise()
+      .then(res => console.log(res))
+      .catch(this.handleError);
+  }
+
+  private handleError(error : any) : Promise<any> {
+    console.error('An error occurred', error);
+    return Promise.reject(error.message || error);
+  }
 }

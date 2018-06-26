@@ -3,7 +3,7 @@ const app = express()
 var restRouter = require('./routes/rest');
 var indexRouter = require('./routes/index');
 var mongoose = require('mongoose');
-var path = require('path')
+var path = require('path');
 
 mongoose.connect('mongodb://user:xiyinlifaze123@ds151970.mlab.com:51970/coj');
 

@@ -33,4 +33,8 @@ export class ProfileComponent implements OnInit {
     this.username = profile.nickname;
   }
 
+  resetPassword() {
+    this.auth.resetPassword();
+  }
+
 }
